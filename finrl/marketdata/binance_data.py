@@ -93,6 +93,9 @@ class BinanceData:
             
         # remove missing data
         df_all = df_all.loc[id_nomiss]
+
+        # convert date to standard string format, easy to filter
+        df_all["date"] = df_all["date"].apply(lambda x: x.strftime("%Y-%m-%d %H:%M:%S"))
         
         print("Shape of DataFrame: ", df_all.shape)
         print("Display DataFrame: ", df_all.head())

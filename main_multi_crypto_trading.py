@@ -49,28 +49,36 @@ if __name__ == "__main__":
     print(df.sort_values(['date','tic'],ignore_index=True).head())
 
     # Preprocess Data
+    print("Feature Engineering:")
     fe = FeatureEngineer(use_technical_indicator=True,
                          tech_indicator_list = config.TECHNICAL_INDICATORS_LIST,
-                         use_turbulence=True,
+                         #use_turbulence=True,
+                         use_turbulence=False,
                          user_defined_feature = False)
     processed = fe.preprocess_data(df)
-    
-    list_ticker = processed["tic"].unique().tolist()
-    list_date = list(pd.date_range(processed['date'].min(),processed['date'].max()).astype(str))
-    combination = list(itertools.product(list_date,list_ticker))
+    #processed = fe.preprocess_data(df.iloc[0:1500])
 
-    processed_full = pd.DataFrame(combination,columns=["date","tic"]).merge(processed,on=["date","tic"],how="left")
-    processed_full = processed_full[processed_full['date'].isin(processed['date'])]
-    processed_full = processed_full.sort_values(['date','tic'])
-    processed_full = processed_full.fillna(0)
+    # save processed data
+    processed.to_csv("data/Binance/preprocessed_binance_1min.csv")
+
+    print("creating full data:")
+    processed_full = processed
+    #list_ticker = processed["tic"].unique().tolist()
+    #list_date = list(pd.date_range(processed['date'].min(),processed['date'].max()).astype(str))
+    #combination = list(itertools.product(list_date,list_ticker))
+
+    #processed_full = pd.DataFrame(combination,columns=["date","tic"]).merge(processed,on=["date","tic"],how="left")
+    #processed_full = processed_full[processed_full['date'].isin(processed['date'])]
+    #processed_full = processed_full.sort_values(['date','tic'])
+    #processed_full = processed_full.fillna(0)
 
     print(processed_full.sort_values(['date','tic'],ignore_index=True).head(10))
-
+    
     import pdb;pdb.set_trace()
 
     # Design Environment
-    train = data_split(processed_full, '2009-01-01','2019-01-01')
-    trade = data_split(processed_full, '2019-01-01','2021-01-01')
+    train = data_split(processed_full, config.START_DATE, config.START_TRADE_DATE)
+    trade = data_split(processed_full, config.START_TRADE_DATE, config.END_DATE)
     print(len(train))
     print(len(trade))
 
