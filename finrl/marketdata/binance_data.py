@@ -47,7 +47,16 @@ class BinanceData:
         # column names to be used
         col_use = ["date","symbol","open","high","low","close","Volume USDT"]
 
+        # create dataframe with regular interval
+        df_regular = pd.DataFrame({"date":pd.date_range(start=self.start_date,
+                                                        end=self.end_date,
+                                                        freq="Min")})
+        df_regular = df_regular[:-1]
+        
+        id_nomiss = pd.Series([True]*len(df_regular))
+
         df_all = pd.DataFrame()
+        
         for file in files:
             print("opening csv file:",file)
             df = pd.read_csv(file,skiprows=1)
@@ -55,7 +64,8 @@ class BinanceData:
             # rename to be consistent with FinRL 
             df = df.rename(columns={'symbol': 'tic', 'Volume USDT': 'volume'})
             # create day of the week column (monday = 0)
-            df["day"] = (pd.to_datetime(df["date"])).dt.dayofweek
+            df["date"] = pd.to_datetime(df["date"])
+            df["day"] = df["date"].dt.dayofweek
 
             label = df["tic"][0]
             start = sorted(df["date"])[0]
@@ -64,23 +74,26 @@ class BinanceData:
             if not(label in self.ticker_list):
                 print ("skipped:",label)
                 continue
-
+            
             # extract from start_date to end_date
-            id_slct = (pd.to_datetime(df["date"]) >= pd.to_datetime(self.start_date)) * \
-                      (pd.to_datetime(df["date"]) <  pd.to_datetime(self.end_date))
+            id_slct = (df["date"] >= self.start_date) & \
+                      (df["date"] <  self.end_date)
             print("No. of selected data",sum(id_slct))
             df = df[id_slct]
 
+            df_m = pd.merge(df_regular,df,how="left")
+
             # detect missing time series
-            delt = pd.to_datetime(df["date"]) - pd.to_datetime(df["date"].shift(1))
-            flag = delt.dt.total_seconds() < -60.1
-            print(df.loc[flag])
-            
+            id_nomiss = id_nomiss & (~df_m["open"].isnull()) # ~ is "NOT"
+            print("No. of missing entries",sum(df_m["open"].isnull()))
+                        
             print("ticker:%s data period %s - %s" % (label,start,end))
-            print("ticker:%s data period %s - %s" % (label,df["date"].values[0],df["date"].values[-1]))
-            df_all = df_all.append(df)
+            #print("ticker:%s data period %s - %s" % (label,df["date"].values[0],df["date"].values[-1]))
+            df_all = df_all.append(df_m)
             
-        import pdb;pdb.set_trace()
+        # remove missing data
+        df_all = df_all.loc[id_nomiss]
+        
         print("Shape of DataFrame: ", df_all.shape)
         print("Display DataFrame: ", df_all.head())
 
