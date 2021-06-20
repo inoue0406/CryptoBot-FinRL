@@ -3,6 +3,7 @@
 .vscode/
 data*/
 data
+log*
 results
 tensorboard_log
 trained_models
