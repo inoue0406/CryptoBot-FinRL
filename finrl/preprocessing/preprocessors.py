@@ -71,14 +71,18 @@ class FeatureEngineer:
         """
         df = data.copy()
         df = df.sort_values(by=['tic','date'])
+        df = df.reset_index(drop=True)
         stock = Sdf.retype(df.copy())
         unique_ticker = stock.tic.unique()
 
         for indicator in self.tech_indicator_list:
+            print("indicator=",indicator)
             indicator_df = pd.DataFrame()
             for i in range(len(unique_ticker)):
                 try:
                     temp_indicator = stock[stock.tic == unique_ticker[i]][indicator]
+                    df_tic = df[df.tic == unique_ticker[i]]
+                    print("length ",unique_ticker[i],len(temp_indicator),len(df_tic),len(df))
                     temp_indicator = pd.DataFrame(temp_indicator)
                     temp_indicator['tic'] = unique_ticker[i]
                     temp_indicator['date'] = df[df.tic == unique_ticker[i]]['date'].to_list()
