@@ -87,8 +87,9 @@ class DRLAgent:
                 break
         return account_memory[0], actions_memory[0]
 
-    def __init__(self, env):
+    def __init__(self, env, results_dir):
         self.env = env
+        self.results_dir = results_dir
 
     def get_model(
         self,
@@ -113,7 +114,7 @@ class DRLAgent:
         model = MODELS[model_name](
             policy=policy,
             env=self.env,
-            tensorboard_log=f"{config.TENSORBOARD_LOG_DIR}/{model_name}",
+            tensorboard_log=f"{self.results_dir}/{model_name}",
             verbose=verbose,
             policy_kwargs=policy_kwargs,
             **model_kwargs,
@@ -123,7 +124,6 @@ class DRLAgent:
     def train_model(self, model, tb_log_name, total_timesteps=5000):
         model = model.learn(total_timesteps=total_timesteps, tb_log_name=tb_log_name)
         return model
-
 
 class DRLEnsembleAgent:
     @staticmethod
@@ -151,7 +151,7 @@ class DRLEnsembleAgent:
         model = MODELS[model_name](
             policy=policy,
             env=env,
-            tensorboard_log=f"{config.TENSORBOARD_LOG_DIR}/{model_name}",
+            tensorboard_log=f"{self.results_dir}/{model_name}",
             verbose=verbose,
             policy_kwargs=policy_kwargs,
             **temp_model_kwargs,
