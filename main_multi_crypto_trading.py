@@ -66,21 +66,21 @@ def drl_train(env_train, model_type, opt):
     
     if model_type == "a2c":
         # Model 1: A2C
-        agent = DRLAgent(env_train, opt.result_dir)
+        agent = DRLAgent(env_train, opt.results_dir)
         model_a2c = agent.get_model("a2c")
         trained_model = agent.train_model(model=model_a2c,
                                         tb_log_name='a2c',
                                         total_timesteps=100000)
     elif model_type == "ddpg":
         # Model 2: DDPG
-        agent = DRLAgent(env_train, opt.result_dir)
+        agent = DRLAgent(env_train, opt.results_dir)
         model_ddpg = agent.get_model("ddpg")
         trained_model = agent.train_model(model=model_ddpg,
                                          tb_log_name='ddpg',
                                          total_timesteps=50000)
     elif model_type == "ppo":
         # Model 3: PPO
-        agent = DRLAgent(env_train, opt.result_dir)
+        agent = DRLAgent(env_train, opt.results_dir)
         PPO_PARAMS = {
             "n_steps": 2048,
             "ent_coef": 0.01,
@@ -94,7 +94,7 @@ def drl_train(env_train, model_type, opt):
                                         total_timesteps=50000)
     elif model_type == "td3":
         # Model 4: TD3
-        agent = DRLAgent(env_train, opt.result_dir)
+        agent = DRLAgent(env_train, opt.results_dir)
         TD3_PARAMS = {"batch_size": 100,
                       "buffer_size": 1000000,
                       "learning_rate": 0.001}
@@ -104,7 +104,7 @@ def drl_train(env_train, model_type, opt):
                                         total_timesteps=30000)
     elif model_type == "sac":
         # Model 5: SAC
-        agent = DRLAgent(env_train, opt.result_dir)
+        agent = DRLAgent(env_train, opt.results_dir)
         SAC_PARAMS = {
             "batch_size": 128,
             "buffer_size": 1000000,
