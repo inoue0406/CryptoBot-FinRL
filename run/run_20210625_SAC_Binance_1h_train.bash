@@ -15,7 +15,7 @@ case="20210625_SAC_Binance_1h_train"
 #                   If an array is provided, then each index correspond to each asset
 
 # running script
-python main_multi_crypto_trading.py\
+python main_multi_crypto_trading.py --no_train --prep_flag 0\
        --model_name sac\
        --data_dir daata/Binance/spot-1min\
        --results_dir results/$case\
@@ -27,5 +27,7 @@ python main_multi_crypto_trading.py\
        --tickers BTCUSDT ETHUSDT ADAUSDT XRPUSDT DOGEUSDT LTCUSDT LINKUSDT\
        --hmax 100\
        --initial_amount 10000\
-       --buy_cost_pct 0.1\
-       --sell_cost_pct 0.1\
+       --buy_cost_pct 0.001\
+       --sell_cost_pct 0.001\
+       --learning_rate 0.000001\
+       --total_timesteps 800000\

@@ -3,6 +3,15 @@ import argparse
 def parse_opts():
     parser = argparse.ArgumentParser()
     parser.add_argument(
+        '--no_train',
+        action='store_true',
+        help='If true, training is not performed.')
+    parser.add_argument(
+        '--prep_flag',
+        type=int,
+        default=1,
+        help='run prep or not')
+    parser.add_argument(
         '--model_name',
         type=str,
         default='sac',
@@ -61,6 +70,16 @@ def parse_opts():
         type=float,
         default=0.1,
         help='Cost of selling in %')
+    parser.add_argument(
+        '--learning_rate',
+        type=float,
+        default=0.001,
+        help='Learning Rate for RL')
+    parser.add_argument(
+        '--total_timesteps',
+        type=float,
+        default=80000,
+        help='Total Timesteps for RL')
     
     args = parser.parse_args()
 

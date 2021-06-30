@@ -21,6 +21,13 @@ from finrl.env.env_stocktrading import StockTradingEnv
 from finrl.model.models import DRLAgent
 from finrl.trade.backtest import backtest_stats, backtest_plot, get_daily_return, get_baseline
 
+from stable_baselines3 import A2C
+from stable_baselines3 import DDPG
+from stable_baselines3 import TD3
+from stable_baselines3 import SAC
+from stable_baselines3 import PPO
+
+MODELS = {"a2c": A2C, "ddpg": DDPG, "td3": TD3, "sac": SAC, "ppo": PPO}
 
 def run_prep(opt,fname_processed):
     # Run prep routines
@@ -55,6 +62,7 @@ def run_prep(opt,fname_processed):
     processed.to_csv(fname_processed)
 
     processed_full = processed
+    processed_full = processed_full.sort_values(['date','tic']).reset_index(drop=True)
     
     print(processed_full.sort_values(['date','tic'],ignore_index=True).head(10))
     
@@ -108,7 +116,7 @@ def drl_train(env_train, model_type, opt):
         SAC_PARAMS = {
             "batch_size": 128,
             "buffer_size": 1000000,
-            "learning_rate": 0.0001,
+            "learning_rate": opt.learning_rate,
             "learning_starts": 100,
             "ent_coef": "auto_0.1",
             
@@ -116,7 +124,7 @@ def drl_train(env_train, model_type, opt):
         model_sac = agent.get_model("sac",model_kwargs = SAC_PARAMS)
         trained_model = agent.train_model(model=model_sac,
                                           tb_log_name='sac',
-                                          total_timesteps=80000)
+                                          total_timesteps=opt.total_timesteps)
     return trained_model
 
 if __name__ == "__main__":
@@ -128,51 +136,59 @@ if __name__ == "__main__":
     if not os.path.exists("./" + opt.results_dir):
         os.makedirs("./" + opt.results_dir)
 
-    #prep_flg = 0
-    prep_flg = 1
+    # Data Prep
     #fname_processed ="data/Binance/preprocessed_binance_1min_single.csv"
     fname_processed ="data/Binance/preprocessed_binance_1hour.csv"
-
-    if prep_flg == 1:
+    
+    if opt.prep_flag == 1:
         # run the prep
         processed_full = run_prep(opt,fname_processed)
     else:
         # load preprocessed data
+        print("loading from preprocessed data")
         processed_full = pd.read_csv(fname_processed)
+        
         
     # Design Environment
     train = data_split(processed_full, opt.start_date, opt.start_trade_date)
     trade = data_split(processed_full, opt.start_trade_date, opt.end_date)
     print(len(train))
     print(len(trade))
-
+    
     stock_dimension = len(train.tic.unique())
     state_space = 1 + 2*stock_dimension + len(opt.tech_indicators)*stock_dimension
     print(f"Stock Dimension: {stock_dimension}, State Space: {state_space}")
-
+    
     env_kwargs = {
-            "hmax": opt.hmax,
-            "initial_amount": opt.initial_amount,
-            "buy_cost_pct": opt.buy_cost_pct,
-            "sell_cost_pct": opt.sell_cost_pct,
-            "state_space": state_space,
-            "stock_dim": stock_dimension,
-            "tech_indicator_list": opt.tech_indicators,
-            "action_space": stock_dimension,
-            "reward_scaling": 1e-4
+        "hmax": opt.hmax,
+        "initial_amount": opt.initial_amount,
+        "buy_cost_pct": opt.buy_cost_pct,
+        "sell_cost_pct": opt.sell_cost_pct,
+        "state_space": state_space,
+        "stock_dim": stock_dimension,
+        "tech_indicator_list": opt.tech_indicators,
+        "action_space": stock_dimension,
+        "reward_scaling": 1e-4
     }
+    
+    if not(opt.no_train):
+        # Training
 
-    e_train_gym = StockTradingEnv(df = train, **env_kwargs)
+        e_train_gym = StockTradingEnv(df = train, **env_kwargs)
 
-    # environment for training
-    env_train, _ = e_train_gym.get_sb_env()
-    print(type(env_train))
+        # environment for training
+        env_train, _ = e_train_gym.get_sb_env()
+        print(type(env_train))
 
-    # Training
-    model_type = "sac"
-    trained_model = drl_train(env_train, model_type, opt)
-    # save the trained model
-    trained_model.save(opt.results_dir + "/trained_model")
+        # Training
+        trained_model = drl_train(env_train, opt.model_name, opt)
+        # save the trained model
+        trained_model.save(opt.results_dir + "/trained_model")
+        
+    else:
+        # load pretrained model
+        print("loading from pretrained model")
+        trained_model = MODELS[opt.model_name].load(opt.results_dir + "/trained_model")
 
     # Trading
     

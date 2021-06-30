@@ -36,8 +36,9 @@ class BinanceData_dl:
         self.data_dir = data_dir
         self.ticker_list = ticker_list
 
-    def binance_klines_fromurl(self, symbol, interval, start, end, limit=5000):
+    def binance_klines_fromurl(self, symbol, interval, start, end, scaling, limit=5000):
         # convert to unix time in [ms]
+        print("scaling coeff:",symbol,scaling)
         start_unix = int(time.mktime(datetime.datetime.strptime(start, "%Y-%m-%d").timetuple())*1000)
         end_unix = int(time.mktime(datetime.datetime.strptime(end, "%Y-%m-%d").timetuple())*1000)
         df = pd.DataFrame()
@@ -61,12 +62,12 @@ class BinanceData_dl:
         df.reset_index(drop=True, inplace=True)
         # check duplicates
         print("check duplicates:",sum(df["date"].duplicated()))
-        # convert to numeric
-        df["open"] = pd.to_numeric(df["open"])
-        df["high"] = pd.to_numeric(df["high"])
-        df["low"] = pd.to_numeric(df["low"])
-        df["close"] = pd.to_numeric(df["close"])
-        df["volume"] = pd.to_numeric(df["volume"])
+        # convert to numeric and apply scaling
+        df["open"] = pd.to_numeric(df["open"])/scaling
+        df["high"] = pd.to_numeric(df["high"])/scaling
+        df["low"] = pd.to_numeric(df["low"])/scaling
+        df["close"] = pd.to_numeric(df["close"])/scaling
+        df["volume"] = pd.to_numeric(df["volume"])/scaling
             
         return df
 
@@ -101,10 +102,14 @@ class BinanceData_dl:
         id_nomiss = pd.Series([True]*len(df_regular))
 
         df_all = pd.DataFrame()
+
+        # mean value for scaling
+        scaling_coeff = {"ADAUSDT":0.428, "BTCUSDT":23467, "DOGEUSDT":0.057,
+                         "ETHUSDT":906, "LINKUSDT":15.3,"LTCUSDT":105.7, "XRPUSDT":0.43}
         
         for tic in self.ticker_list:
             
-            df = self.binance_klines_fromurl(tic, interval, self.start_date, self.end_date)
+            df = self.binance_klines_fromurl(tic, interval, self.start_date, self.end_date, scaling_coeff[tic])
             df = df[col_use]
             # create day of the week column (monday = 0)
             #df["date"] = pd.to_datetime(df["date"])
