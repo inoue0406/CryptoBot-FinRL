@@ -204,28 +204,29 @@ if __name__ == "__main__":
     )
 
     # save account value and df_actions
+    df_account_value.to_csv(opt.results_dir + "/backtest_account_value.csv")
+    df_actions.to_csv(opt.results_dir + "/backtest_actions.csv")
 
     # Backtesting
-    print("==============Get Backtest Results===========")
-
+    print("Get Backtest Results")
     perf_stats_all = backtest_stats(account_value=df_account_value)
     perf_stats_all = pd.DataFrame(perf_stats_all)
-    perf_stats_all.to_csv("./" + opt.results_dir + "/perf_stats_all.csv")
 
     #baseline stats
-    print("==============Get Baseline Stats===========")
+    tic_baseline = "BTCUSDT"
+    print("Get Baseline Stats: ticker:",tic_baseline)
     baseline_df = get_baseline(
-                ticker="BTCUSDT",
-                start = opt.start_trade_date,
-                end = opt.end_date
+        ticker=tic_baseline,
+        df=trade
     )
     stats = backtest_stats(baseline_df, value_col_name = 'close')
 
-    print("==============Compare to DJIA===========")
-    #%matplotlib inline
-    backtest_plot(df_account_value,
-                  baseline_ticker = "BTCUSDT",
-                  baseline_start = opt.start_trade_date,
-                  baseline_end = opt.end_date)
+    # Combine backtest and baseline stats
+    df_comp = pd.concat([perf_stats_all,stats],axis=1)
+    df_comp.columns = [opt.model_name,tic_baseline]
+    df_comp.to_csv("./" + opt.results_dir + "/backtest_perf_stats_all.csv")
 
-    
+#    print("Comparative Plotting with Baseline Portfolio")
+#    #%matplotlib inline
+#    backtest_plot(df_account_value,
+#                  baseline_df)
